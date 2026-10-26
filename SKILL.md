@@ -1,11 +1,11 @@
 ---
 slug: imap-smtp-email-sanzhixiaoxia
-displayName: IMAP/SMTP 邮件收发
-version: 2.1.0
+displayName: 多邮箱管理助手
+version: 2.1.1
 summary: 通过 IMAP/SMTP 收发邮件：增量收取、搜索、附件下载、批量标记、发信、连通性体检。支持 Gmail/Outlook/163/QQ/139/sina/aliyun/189 等 19 种邮箱，含非交互式一条命令配置，分层可测架构。
 license: MIT
-name: imap-smtp-email
-description: Read and send email via IMAP/SMTP. Check for new/unread messages (with incremental --since-last polling), fetch content by UID, search mailboxes, download attachments, mark as read/unread, and send emails with attachments. Supports multiple accounts, JSON/table/text/CSV output, and a doctor command for connectivity checks. Works with any IMAP/SMTP server including Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, and NetEase Enterprise.
+name: multi-mailbox-assistant
+description: 多邮箱管理助手——通过 IMAP/SMTP 收发邮件。Check for new/unread messages (with incremental --since-last polling), fetch content by UID, search mailboxes, download attachments, mark as read/unread, and send emails with attachments. Supports multiple accounts, JSON/table/text/CSV output, and a doctor command for connectivity checks. Works with any IMAP/SMTP server including Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, and NetEase Enterprise.
 metadata:
   clawdbot:
     emoji: "\U0001F4E7"
@@ -18,14 +18,14 @@ metadata:
         - USERNAME
         - PASSWORD
     primaryEnv: PROVIDER
-display_name: "IMAP/SMTP邮件"
-display_name_en: "Imap Smtp Email"
-description_zh: "通过 IMAP/SMTP 收发邮件，支持多账户、增量收取与附件管理"
-description_en: "Read and send email via IMAP/SMTP with multi-account, incremental check, and attachment support"
+display_name: "多邮箱管理助手"
+display_name_en: "Multi-Mailbox Assistant"
+description_zh: "多邮箱管理助手——支持多账户、增量收取与附件管理"
+description_en: "Multi-mailbox assistant: read and send email via IMAP/SMTP with multi-account, incremental check, and attachment support"
 visibility: "public"
 ---
 
-# IMAP/SMTP Email Tool
+# 多邮箱管理助手 (Multi-Mailbox Assistant)
 
 Read, search, and manage email via IMAP protocol. Send email via SMTP. Supports Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ Mail, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, NetEase Enterprise, and any standard IMAP/SMTP server.
 

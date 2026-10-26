@@ -1,7 +1,7 @@
 {
   "name": "imap-smtp-email-skill",
-  "version": "2.0.0",
-  "description": "IMAP/SMTP email tool for Claude. Works with Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ Mail, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, NetEase Enterprise, and any standard IMAP/SMTP server.",
+  "version": "2.1.1",
+  "description": "多邮箱管理助手 (Multi-Mailbox Assistant) — IMAP/SMTP email tool. Works with Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ Mail, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, NetEase Enterprise, and any standard IMAP/SMTP server.",
   "main": "scripts/imap.js",
   "scripts": {
     "check": "node scripts/imap.js check",
