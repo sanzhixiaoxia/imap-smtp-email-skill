@@ -82,6 +82,10 @@ function buildCommands({ imap, smtp }) {
           smtpSecure: options['smtp-secure'],
           noVerify: !!options['no-verify'],
         });
+        // 若指定密钥路径，同步到环境变量，保证写入密钥 == 后续读取密钥
+        if (options['key-path']) {
+          process.env.MAIL_SKILLS_KEY = options['key-path'];
+        }
         const result = writeConfig(account, {
           configPath: options['config-path'],
           keyPath: options['key-path'],

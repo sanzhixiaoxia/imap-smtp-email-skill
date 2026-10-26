@@ -36,6 +36,8 @@ function deriveKey(passphrase) {
  * @returns {{key: Buffer, path: string, created: boolean}}
  */
 function loadOrCreateKey(options = {}) {
+  // 优先级：显式传入 keyPath > MAIL_SKILLS_KEY 环境变量 > 默认路径。
+  // 注意：显式参数必须优先于环境变量，否则「写入用 A 密钥、读取用 B 密钥」会解密失败。
   const keyPath = options.keyPath
     || process.env.MAIL_SKILLS_KEY
     || DEFAULT_KEY_PATH;

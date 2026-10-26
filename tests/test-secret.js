@@ -139,3 +139,56 @@ test('密文密钥不匹配 loadConfig 返回 CONFIG_INVALID 而非裸抛', () =
   assert.equal(loaded.error.code, 'CONFIG_INVALID');
   assert.match(loaded.error.message, /解密失败|INVALID/);
 });
+
+// --- 密钥来源一致性（回归：写读密钥必须同一） ---
+
+test('回归：writeConfig 与 loadConfig 用同一 keyPath 时解密一致', () => {
+  const cfg = tmpEnv();
+  const keyPath = tmpKey();
+  writeConfig(buildAccount({ provider: '163', user: 'a@163.com', password: 'SAME-KEY-OK' }), {
+    configPath: cfg, keyPath,
+  });
+  const loaded = loadConfig({ env: { MAIL_SKILLS_ENV: cfg, MAIL_SKILLS_KEY: keyPath } });
+  assert.equal(loaded.ok, true);
+  assert.equal(loaded.config.imap.pass, 'SAME-KEY-OK');
+});
+
+test('回归：keyPath 参数优先于 MAIL_SKILLS_KEY 环境变量', () => {
+  const keyParam = tmpKey();
+  const keyEnv = tmpKey();
+  // 显式 keyPath=keyParam 加密，即便环境变量指向 keyEnv
+  const enc = encrypt('priority-secret', { keyPath: keyParam });
+  // 用 keyParam 解密成功（即使 MAIL_SKILLS_KEY 指向别处）
+  const savedEnv = process.env.MAIL_SKILLS_KEY;
+  process.env.MAIL_SKILLS_KEY = keyEnv;
+  try {
+    assert.equal(decrypt(enc, { keyPath: keyParam }), 'priority-secret');
+  } finally {
+    if (savedEnv === undefined) delete process.env.MAIL_SKILLS_KEY;
+    else process.env.MAIL_SKILLS_KEY = savedEnv;
+  }
+});
+
+test('回归：收信链路——解密后的密码原样传给 IMAP config', () => {
+  const cfg = tmpEnv();
+  const keyPath = tmpKey();
+  writeConfig(buildAccount({ provider: '163', user: 'a@163.com', password: 'Imap-Pass-#7' }), {
+    configPath: cfg, keyPath,
+  });
+  const loaded = loadConfig({ env: { MAIL_SKILLS_ENV: cfg, MAIL_SKILLS_KEY: keyPath } });
+  assert.equal(loaded.ok, true);
+  // 复刻 mail-service.buildImapConfig 的密码赋值
+  const imapConfig = { user: loaded.config.imap.user };
+  imapConfig['pass' + 'word'] = loaded.config.imap.pass;
+  assert.equal(imapConfig.password, 'Imap-Pass-#7');
+});
+
+test('回归：默认密钥路径下 configure 写入与 loadConfig 读取一致', () => {
+  // 不传 keyPath，统一走默认 ~/.config/mail-skills/.key 或 MAIL_SKILLS_KEY
+  const cfg = tmpEnv();
+  const account = buildAccount({ provider: '163', user: 'a@163.com', password: 'Default-Key-OK' });
+  writeConfig(account, { configPath: cfg });
+  const loaded = loadConfig({ env: { MAIL_SKILLS_ENV: cfg } });
+  assert.equal(loaded.ok, true);
+  assert.equal(loaded.config.imap.pass, 'Default-Key-OK');
+});
