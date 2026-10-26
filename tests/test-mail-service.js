@@ -445,6 +445,39 @@ test('回归：check 的 limit/bodyChars 为 undefined 时不破坏默认', asyn
   assert.equal(out.results.length, 3);
 });
 
+// --- 回归：中文 subject 搜索必须走本地兜底（QQ 服务端不支持中文 SUBJECT） ---
+
+test('回归：非 ASCII 搜索词触发本地文本兜底', async () => {
+  const svc = makeService(makeConfig('imap.qq.com'), makeFakeImap({}));
+  assert.equal(svc._needsLocalTextSearch({ subject: '复测A' }), true);
+  assert.equal(svc._needsLocalTextSearch({ from: '王经理' }), true);
+  assert.equal(svc._needsLocalTextSearch({ subject: 'Release' }), false);
+  assert.equal(svc._needsLocalTextSearch({ from: 'a@b.c', subject: 'Meeting' }), false);
+});
+
+test('回归：QQ 中文 subject 搜索走本地兜底而非服务端', async () => {
+  // QQ 无服务端中文 SUBJECT 支持，须本地扫描匹配
+  const RAW_CN = [
+    'From: a@163.com',
+    'To: b@qq.com',
+    'Subject: 复测A-163toQQ',
+    'Content-Type: text/plain; charset="utf-8"',
+    '',
+    '正文',
+  ].join('\r\n');
+  const msgs = [
+    { uid: 7573, date: new Date(2026, 9, 26, 18, 41), flags: [], raw: RAW_CN },
+    { uid: 1, date: new Date(2026, 9, 1, 0, 0), flags: [], raw: RAW }, // 不匹配
+  ];
+  const imap = makeFakeImap({ messages: msgs, searchResult: [7573, 1] });
+  const svc = makeService(makeConfig('imap.qq.com'), imap);
+  const out = await svc.search({ subject: '复测', limit: 5 });
+  // 本地兜底命中（fallbackUsed）且只返回中文匹配那封
+  assert.equal(out.meta.returned, 1);
+  assert.equal(out.meta.fallbackUsed, true);
+  assert.equal(out.results[0].uid, 7573);
+});
+
 test('markRead: 非数字 UID 在连接前即被拒绝', async () => {
   const imap = makeFakeImap({});
   const svc = makeService(makeConfig(), imap);

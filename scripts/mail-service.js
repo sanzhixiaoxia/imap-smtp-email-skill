@@ -182,6 +182,15 @@ class MailService {
     return LOCAL_TEXT_SEARCH_PROVIDERS.includes(this.provider);
   }
 
+  /**
+   * 搜索词是否含非 ASCII（中文等）。服务端 IMAP SUBJECT/FROM 搜索
+   * 对非 ASCII 关键词支持差（如 QQ 返回无关结果），需走本地文本兜底。
+   */
+  _needsLocalTextSearch(options) {
+    const text = `${options.from || ''}${options.subject || ''}`;
+    return /[^\x00-\x7F]/.test(text);
+  }
+
   // --- 命令 ---
 
   /**
@@ -331,7 +340,7 @@ class MailService {
     }
 
     const out = await this.sessionOnBox(mailbox, async (imap) => {
-      if (this._useLocalTextSearch() && (options.from || options.subject)) {
+      if ((this._useLocalTextSearch() || this._needsLocalTextSearch(options)) && (options.from || options.subject)) {
         return this._searchLocal(imap, options, { limit, offset, bodyChars });
       }
       const criteria = this._buildCriteria(options);

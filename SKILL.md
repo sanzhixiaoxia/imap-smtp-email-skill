@@ -1,7 +1,7 @@
 ---
 slug: imap-smtp-email-sanzhixiaoxia
 displayName: 多邮箱管理助手
-version: 2.2.0
+version: 2.2.1
 summary: 通过 IMAP/SMTP 收发邮件：增量收取、搜索、附件下载、批量标记、发信、连通性体检。支持 Gmail/Outlook/163/QQ/139/sina/aliyun/189 等 19 种邮箱，含非交互式一条命令配置、凭证 AES-256 加密存储，分层可测架构。
 license: MIT
 name: multi-mailbox-assistant
