@@ -1,6 +1,10 @@
 ---
+slug: imap-smtp-email-sanzhixiaoxia
+displayName: IMAP/SMTP 邮件收发
+version: 2.1.0
+summary: 通过 IMAP/SMTP 收发邮件：增量收取、搜索、附件下载、批量标记、发信、连通性体检。支持 Gmail/Outlook/163/QQ/139/sina/aliyun/189 等 19 种邮箱，含非交互式一条命令配置，分层可测架构。
+license: MIT
 name: imap-smtp-email
-version: 2.0.0
 description: Read and send email via IMAP/SMTP. Check for new/unread messages (with incremental --since-last polling), fetch content by UID, search mailboxes, download attachments, mark as read/unread, and send emails with attachments. Supports multiple accounts, JSON/table/text/CSV output, and a doctor command for connectivity checks. Works with any IMAP/SMTP server including Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, and NetEase Enterprise.
 metadata:
   clawdbot:
@@ -28,17 +32,26 @@ Read, search, and manage email via IMAP protocol. Send email via SMTP. Supports 
 ## 快速开始：收取 163 邮箱新邮件
 
 1. **开启服务并获取授权码**：163 网页版 → 设置 → POP3/SMTP/IMAP → 开启 IMAP/SMTP 服务 → 按提示获取授权码（**不是登录密码**）
-2. **配置账户**：`bash setup.sh`（选 `1) 163.com`，密码处填授权码）
+2. **配置账户（推荐：一条命令，无需菜单）**：
+
+```bash
+node scripts/mail.js configure --provider 163 --user you@163.com --password 你的授权码
+```
+
+也可交互式 `bash setup.sh`（选 `1) 163.com`，密码处填授权码）。
+
 3. **收取新邮件**：
 
 ```bash
-node scripts/imap.js check --new               # 最近 24 小时未读（最常用）
-node scripts/imap.js check --since-last        # 自从上次检查以来的新邮件（agent 轮询推荐）
-node scripts/imap.js check --recent 7d --unseen
-node scripts/imap.js check --format table      # 摘要表格，适合快速浏览
-node scripts/imap.js check --format text       # 完整可读正文
-node scripts/imap.js check --format csv        # 导出给 Excel/后续处理
+node scripts/mail.js check --new               # 最近 24 小时未读（最常用）
+node scripts/mail.js check --since-last        # 自从上次检查以来的新邮件（agent 轮询推荐）
+node scripts/mail.js check --recent 7d --unseen
+node scripts/mail.js check --format table      # 摘要表格，适合快速浏览
+node scripts/mail.js check --format text       # 完整可读正文
+node scripts/mail.js check --format csv        # 导出给 Excel/后续处理
 ```
+
+> `node scripts/mail.js` 是统一入口，收发/配置/体检全部命令都在这里。`scripts/imap.js`（仅收）和 `scripts/smtp.js`（仅发）仍可作为兼容入口使用。多账户加 `--account <name>`。
 
 ## Configuration
 
