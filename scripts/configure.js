@@ -12,6 +12,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { PROVIDERS } = require('./providers');
 const { MailError, ERROR_CODES } = require('./errors');
+const { encrypt, isEncrypted } = require('./secret');
 
 const SHARED_CONFIG_DIR = path.join(os.homedir(), '.config', 'mail-skills');
 const DEFAULT_CONFIG_PATH = path.join(SHARED_CONFIG_DIR, '.env');
@@ -66,14 +67,20 @@ function buildAccount(input) {
 
 /**
  * 把账户渲染成 env 块文本。
+ * 密码在写盘前加密为 enc:v1: 串，避免明文落盘（loadConfig 加载时自动解密）。
  */
-function renderAccountBlock(account) {
+function renderAccountBlock(account, options = {}) {
   const prefix = account.name ? `${account.name.toUpperCase()}_` : '';
+  // 已是密文则不再加密；否则加密。options.noEncrypt 供测试/特殊场景写明文。
+  const passOut = options.noEncrypt
+    ? account.password
+    : (isEncrypted(account.password) ? account.password : encrypt(account.password, options));
+
   const lines = [
     `# ${account.name || 'Default'} account`,
     `${prefix}PROVIDER=${account.provider}`,
     `${prefix}USERNAME=${account.user}`,
-    `${prefix}PASSWORD=${account.password}`,
+    `${prefix}PASSWORD=${passOut}`,
   ];
   if (account.provider === 'custom') {
     lines.push(`${prefix}IMAP_HOST=${account.imapHost}`);
@@ -117,7 +124,7 @@ function writeConfig(account, options = {}) {
     });
   }
 
-  const block = renderAccountBlock(account);
+  const block = renderAccountBlock(account, options);
   const lines = [];
   let mode;
 

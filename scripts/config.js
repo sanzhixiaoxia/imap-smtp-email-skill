@@ -15,6 +15,19 @@ const fs = require('node:fs');
 const dotenv = require('dotenv');
 const { PROVIDERS } = require('./providers');
 const { MailError, ERROR_CODES } = require('./errors');
+const { decrypt } = require('./secret');
+
+/** 解密凭证字段：enc:v1: 前缀则解密，明文则原样返回。失败时给出可读错误。 */
+function reveal(value, fieldName, keyPath) {
+  if (value == null) return value;
+  try {
+    return decrypt(value, keyPath ? { keyPath } : {});
+  } catch (e) {
+    throw new MailError(ERROR_CODES.CONFIG_INVALID, `${fieldName} 解密失败`, {
+      hint: `密文与密钥不匹配（${e.message}）。密钥存于 ~/.config/mail-skills/.key；如密钥丢失请用 configure 重新写入账户。`,
+    });
+  }
+}
 
 const LEGACY_ENV_PATH = path.join(os.homedir(), '.config', 'imap-smtp-email', '.env');
 const SHARED_ENV_PATH = path.join(os.homedir(), '.config', 'mail-skills', '.env');
@@ -63,12 +76,12 @@ function retriesOf(env, prefix, fallback = 1) {
 }
 
 // shared 格式（PROVIDER/USERNAME/PASSWORD）
-function buildFromShared(env, prefix) {
+function buildFromShared(env, prefix, keyPath) {
   const p = prefix ? `${prefix}_` : '';
   const provider = env[`${p}PROVIDER`];
   if (!provider) return null;
   const username = env[`${p}USERNAME`];
-  const password = env[`${p}PASSWORD`];
+  const password = reveal(env[`${p}PASSWORD`], `${p}PASSWORD`, keyPath);
   if (!username || !password) return null;
 
   let imapPreset;
@@ -129,7 +142,7 @@ function buildFromShared(env, prefix) {
 }
 
 // legacy 格式（IMAP_HOST/IMAP_USER/...）
-function buildFromLegacy(env, prefix) {
+function buildFromLegacy(env, prefix, keyPath) {
   const p = prefix ? `${prefix}_` : '';
   if (prefix && !env[`${p}IMAP_HOST`]) return null;
 
@@ -139,7 +152,7 @@ function buildFromLegacy(env, prefix) {
       host: env[`${p}IMAP_HOST`] || '127.0.0.1',
       port: intOrNull(env[`${p}IMAP_PORT`]) || 1143,
       user: env[`${p}IMAP_USER`],
-      pass: env[`${p}IMAP_PASS`],
+      pass: reveal(env[`${p}IMAP_PASS`], `${p}IMAP_PASS`, keyPath),
       tls: env[`${p}IMAP_TLS`] === 'true',
       rejectUnauthorized: env[`${p}IMAP_REJECT_UNAUTHORIZED`] !== 'false',
       mailbox: env[`${p}IMAP_MAILBOX`] || 'INBOX',
@@ -149,7 +162,7 @@ function buildFromLegacy(env, prefix) {
       host: env[`${p}SMTP_HOST`],
       port: intOrNull(env[`${p}SMTP_PORT`]) || 587,
       user: env[`${p}SMTP_USER`],
-      pass: env[`${p}SMTP_PASS`],
+      pass: reveal(env[`${p}SMTP_PASS`], `${p}SMTP_PASS`, keyPath),
       secure: env[`${p}SMTP_SECURE`] === 'true',
       from: env[`${p}SMTP_FROM`] || env[`${p}SMTP_USER`],
       rejectUnauthorized: env[`${p}SMTP_REJECT_UNAUTHORIZED`] !== 'false',
@@ -186,9 +199,16 @@ function loadConfig(options = {}) {
   }
 
   const prefix = account ? String(account).toUpperCase() : null;
-  const config = source.type === 'shared'
-    ? buildFromShared(source.env, prefix)
-    : buildFromLegacy(source.env, prefix);
+  const keyPath = env.MAIL_SKILLS_KEY || undefined;
+  let config;
+  try {
+    config = source.type === 'shared'
+      ? buildFromShared(source.env, prefix, keyPath)
+      : buildFromLegacy(source.env, prefix, keyPath);
+  } catch (e) {
+    // 解密失败等凭证错误：以规范 MailError 返回，不抛裸异常
+    return { ok: false, error: e instanceof MailError ? e : new MailError(ERROR_CODES.CONFIG_INVALID, e.message) };
+  }
 
   if (!config) {
     const message = account

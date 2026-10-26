@@ -63,9 +63,19 @@ test('buildAccount: noVerify 转为布尔', () => {
 
 // --- renderAccountBlock ---
 
-test('renderAccountBlock: 默认账户无前缀', () => {
+test('renderAccountBlock: 默认账户无前缀，密码加密落盘', () => {
   const a = buildAccount({ provider: '163', user: 'x@163.com', password: 'code' });
   const block = renderAccountBlock(a);
+  assert.match(block, /^PROVIDER=163$/m);
+  assert.match(block, /^USERNAME=x@163\.com$/m);
+  // 密码加密存储，不出现明文
+  assert.ok(!block.includes('PASSWORD=code'));
+  assert.match(block, /^PASSWORD=enc:v1:/m);
+});
+
+test('renderAccountBlock: 默认账户无前缀（noEncrypt 明文兼容）', () => {
+  const a = buildAccount({ provider: '163', user: 'x@163.com', password: 'code' });
+  const block = renderAccountBlock(a, { noEncrypt: true });
   assert.match(block, /^PROVIDER=163$/m);
   assert.match(block, /^USERNAME=x@163\.com$/m);
   assert.match(block, /^PASSWORD=code$/m);

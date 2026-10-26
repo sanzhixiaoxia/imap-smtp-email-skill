@@ -1,8 +1,8 @@
 ---
 slug: imap-smtp-email-sanzhixiaoxia
 displayName: 多邮箱管理助手
-version: 2.1.1
-summary: 通过 IMAP/SMTP 收发邮件：增量收取、搜索、附件下载、批量标记、发信、连通性体检。支持 Gmail/Outlook/163/QQ/139/sina/aliyun/189 等 19 种邮箱，含非交互式一条命令配置，分层可测架构。
+version: 2.2.0
+summary: 通过 IMAP/SMTP 收发邮件：增量收取、搜索、附件下载、批量标记、发信、连通性体检。支持 Gmail/Outlook/163/QQ/139/sina/aliyun/189 等 19 种邮箱，含非交互式一条命令配置、凭证 AES-256 加密存储，分层可测架构。
 license: MIT
 name: multi-mailbox-assistant
 description: 多邮箱管理助手——通过 IMAP/SMTP 收发邮件。Check for new/unread messages (with incremental --since-last polling), fetch content by UID, search mailboxes, download attachments, mark as read/unread, and send emails with attachments. Supports multiple accounts, JSON/table/text/CSV output, and a doctor command for connectivity checks. Works with any IMAP/SMTP server including Gmail, Outlook, 163.com, vip.163.com, 126.com, vip.126.com, 188.com, vip.188.com, yeah.net, QQ, exmail.qq.com, iCloud, Fastmail, 139, sina, aliyun, 189, and NetEase Enterprise.
@@ -67,7 +67,7 @@ If running commands manually without setup.sh, install dependencies first:
 npm install --production
 ```
 
-Configuration is stored at `~/.config/mail-skills/.env` (shared with caldav-sync skill, survives skill updates). If no shared config is found, the skill checks `~/.config/imap-smtp-email/.env` (legacy) and then a `.env` file in the skill directory.
+Configuration is stored at `~/.config/mail-skills/.env` (shared with caldav-sync skill, survives skill updates). If no shared config is found, the skill checks `~/.config/imap-smtp-email/.env` (legacy) and then a `.env` file in the skill directory. **Passwords are stored encrypted** (AES-256-GCM, `enc:v1:...`); the key lives at `~/.config/mail-skills/.key` (or `$MAIL_SKILLS_KEY`).
 
 Environment overrides:
 - `MAIL_SKILLS_ENV=/path/to/.env` — use a different config file (highest priority; also skips the default locations)
@@ -430,6 +430,10 @@ hint is available, and exit with code 1. Codes are stable for automation:
 
 ## Security Notes
 
+- **凭证加密（默认开启）**：密码/授权码以 AES-256-GCM 加密后存为 `enc:v1:...`，配置文件 `~/.config/mail-skills/.env` 中不再出现明文。加密密钥存于 `~/.config/mail-skills/.key`（`600` 权限，首次使用自动生成）。加载时自动解密，命令用法不变。
+- **密钥可外置**：把 `.key` 放到 U 盘/挂载盘等外部位置更安全，通过 `MAIL_SKILLS_KEY=/path/to/.key` 或 `configure --key-path` 指定；密钥与密文分离后，单独泄露配置文件无法还原密码。
+- **信任边界**：加密防的是「配置文件被误读/误传/备份泄露」，不是对抗本机 root——密钥与密文同机时，能读到 `.key` 的用户仍可解密。需要更强保护请将 `.key` 外置。
+- **密钥丢失**：无法再解密旧密码，用 `configure --force` 重新写入账户即可。
 - Configuration is stored at `~/.config/mail-skills/.env` (or `~/.config/imap-smtp-email/.env` for legacy) with `600` permissions (owner read/write only)
 - Attachment downloads are restricted to `ALLOWED_WRITE_DIRS`; attachment/sending file reads are restricted to `ALLOWED_READ_DIRS` (symlink-resolved)
 - **Gmail**: regular password is rejected — generate an App Password at https://myaccount.google.com/apppasswords

@@ -84,6 +84,7 @@ function buildCommands({ imap, smtp }) {
         });
         const result = writeConfig(account, {
           configPath: options['config-path'],
+          keyPath: options['key-path'],
           force: !!options.force,
         });
         console.log(`✓ 配置已写入: ${result.path}`);
