@@ -1,0 +1,19 @@
+# 依赖：由 setup.sh / npm ci 按 package-lock.json 复现安装
+node_modules/
+
+# 凭证与本地配置：绝不入库
+.env
+*.env
+.env.local
+
+# 日志与缓存
+*.log
+*.log.*
+.cache/
+.DS_Store
+
+# 编辑器/OS 临时文件
+*.swp
+*~
+.idea/
+.vscode/
