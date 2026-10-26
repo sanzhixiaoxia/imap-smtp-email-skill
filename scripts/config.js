@@ -51,10 +51,17 @@ function hasKeyMatching(env, re) {
  * @returns {{path: string, env: object, type: 'shared'|'legacy'}|null}
  */
 function resolveEnvSource(env = process.env) {
-  const candidates = [];
-  if (env.MAIL_SKILLS_ENV) candidates.push(path.resolve(env.MAIL_SKILLS_ENV));
-  candidates.push(LEGACY_ENV_PATH, SHARED_ENV_PATH, FALLBACK_ENV_PATH);
+  // 显式指定 MAIL_SKILLS_ENV 时只认它：不存在则不回落（避免静默用到别的配置）
+  if (env.MAIL_SKILLS_ENV) {
+    const p = path.resolve(env.MAIL_SKILLS_ENV);
+    if (!fs.existsSync(p)) return null;
+    const parsed = parseEnvFile(p);
+    if (Object.keys(parsed).length === 0) return null;
+    const type = hasKeyMatching(parsed, /(^|_)PROVIDER$/) ? 'shared' : 'legacy';
+    return { path: p, env: parsed, type };
+  }
 
+  const candidates = [LEGACY_ENV_PATH, SHARED_ENV_PATH, FALLBACK_ENV_PATH];
   for (const p of candidates) {
     if (!fs.existsSync(p)) continue;
     const parsed = parseEnvFile(p);

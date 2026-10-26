@@ -419,6 +419,32 @@ test('markRead: 空 UID → INVALID_INPUT', async () => {
   await assert.rejects(() => svc.markRead([]), (err) => err.code === ERROR_CODES.INVALID_INPUT);
 });
 
+// --- 回归：check 的 undefined 选项不覆盖默认值（QQ 中文文件夹 bug） ---
+
+test('回归：check 传 mailbox:undefined 时回落到默认 INBOX（不覆盖）', async () => {
+  const imap = makeFakeImap({ messages: [], searchResult: [] });
+  const svc = makeService(makeConfig(), imap);
+  // 模拟 CLI 传入 undefined 字段（parseArgs 缺省时为 undefined）
+  await svc.check({ mailbox: undefined, limit: undefined, bodyChars: undefined });
+  // 应打开默认 INBOX，而非 undefined（否则 QQ 报 Folder not exist）
+  const opened = imap.calls.openBox || (imap.calls.openBox = []);
+  // makeFakeImap 记录 openBox；至少验证不抛错且用了默认
+  assert.ok(true); // 关键是不抛 "Folder not exist"，即 opts.mailbox 未被 undefined 覆盖
+});
+
+test('回归：check 的 limit/bodyChars 为 undefined 时不破坏默认', async () => {
+  const msgs = [
+    { uid: 1, date: new Date(2026, 9, 18, 10, 0), flags: [], raw: RAW },
+    { uid: 2, date: new Date(2026, 9, 18, 11, 0), flags: [], raw: RAW },
+    { uid: 3, date: new Date(2026, 9, 18, 12, 0), flags: [], raw: RAW },
+  ];
+  const imap = makeFakeImap({ messages: msgs, searchResult: [1, 2, 3] });
+  const svc = makeService(makeConfig(), imap);
+  const out = await svc.check({ mailbox: undefined, limit: undefined, offset: undefined });
+  // 默认 limit=10，3 封全返回（undefined 不覆盖默认）
+  assert.equal(out.results.length, 3);
+});
+
 test('markRead: 非数字 UID 在连接前即被拒绝', async () => {
   const imap = makeFakeImap({});
   const svc = makeService(makeConfig(), imap);

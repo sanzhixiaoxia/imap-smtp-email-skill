@@ -71,6 +71,13 @@ test('loadConfig: 配置文件不存在 → CONFIG_MISSING', () => {
   assert.match(error.hint, /setup\.sh/);
 });
 
+test('回归：显式 MAIL_SKILLS_ENV 不存在时不回落到默认路径', () => {
+  // 即便默认 ~/.config/mail-skills/.env 存在，显式路径缺失也不该被静默替换
+  const env = { MAIL_SKILLS_ENV: path.join(os.tmpdir(), 'no-such-file-abc', '.env') };
+  const source = resolveEnvSource(env);
+  assert.equal(source, null);
+});
+
 test('loadConfig: legacy 格式', () => {
   const legacy = [
     'IMAP_HOST=imap.163.com',

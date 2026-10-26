@@ -197,7 +197,8 @@ class MailService {
       bodyChars: 0,
       recentTime: null,
       sinceLast: false,
-      ...options,
+      // 仅用“已定义”的 options 字段覆盖默认，避免 mailbox: undefined 之类覆盖掉默认值
+      ...Object.fromEntries(Object.entries(options).filter(([, v]) => v !== undefined)),
     };
     const t0 = Date.now();
 
